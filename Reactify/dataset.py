@@ -32,7 +32,7 @@ paths_simple6r = {
 
 xform = (
     lambda s: s.crop(0, 12, inplace=True)
-    .cut(1.8, 4, inplace=True)
+    .erase(1.8, 4, inplace=True)
     .normalize(inplace=True)
 )
 

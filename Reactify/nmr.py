@@ -118,6 +118,13 @@ class NMRSpectrum:
         s.spectrum = s.spectrum[selector]
         return s
 
+    def erase(self, low_ppm: float, high_ppm: float, inplace=False):
+        s = self if inplace else self.copy()
+        selector = (s.xscale > low_ppm) & (s.xscale < high_ppm)
+        p1, p2 = s.spectrum[selector][0], s.spectrum[selector][-1]
+        s.spectrum[selector] = p1 + np.linspace(0, p2 - p1, sum(selector))
+        return s
+
     def autophase(self, inplace=False):
         def cost(ph):
             phased_spectrum = self.phase(ph[0], ph[1], inplace=False).spectrum.real
@@ -191,7 +198,11 @@ class NMRSpectrum:
         return s
 
     def shift(
-        self, delta: int, inplace=False, circular=False, fill_value: Union[float, np.ndarray] = 0.0
+        self,
+        delta: int,
+        inplace=False,
+        circular=False,
+        fill_value: Union[float, np.ndarray] = 0.0,
     ) -> NMRSpectrum:
         s = self if inplace else self.copy()
         if delta == 0:

@@ -16,6 +16,7 @@ if gpus:
 import argparse
 from functools import reduce
 from operator import add
+from os import path
 
 import numpy as np
 import seaborn as sns
@@ -43,7 +44,7 @@ def generate_training_dataset(
     coeff_wobble=0.1,
     circular_shift=False,
     quiet=False,
-    one_hot=False
+    one_hot=False,
 ):
     from .dataset import (
         FOLDER_PHOTO,
@@ -72,7 +73,6 @@ def generate_training_dataset(
         outcomes = np.zeros((n_examples, 4), dtype="float32")
     else:
         outcomes = np.zeros(n_examples, dtype="float32")
-
 
     val_inputs = np.zeros((leave_out, 2, min_length), dtype="float32")
     if one_hot:
@@ -133,7 +133,9 @@ def generate_training_dataset(
                     .shift(shift, circular=circular_shift)
                     .spectrum.real
                 )
-                inputs[cntr, 1, :] = rxn_dataset[j].shift(shift, circular=circular_shift).spectrum.real
+                inputs[cntr, 1, :] = (
+                    rxn_dataset[j].shift(shift, circular=circular_shift).spectrum.real
+                )
                 cntr += 1
     cntr = 0
 
@@ -172,8 +174,8 @@ def generate_training_dataset(
 
 def main(
     model_path: str,
-    epochs=5,
-    batch_size=16,
+    epochs=15,
+    batch_size=8,
     train=True,
     evaluate=True,
     plot=True,
@@ -192,7 +194,11 @@ def main(
 
         try:
             model.fit(
-                inputs, outcomes, batch_size=batch_size, epochs=epochs, validation_data=(val_inputs, val_outcomes),
+                inputs,
+                outcomes,
+                batch_size=batch_size,
+                epochs=epochs,
+                validation_data=(val_inputs, val_outcomes),
             )
         except KeyboardInterrupt:
             pass
@@ -219,7 +225,7 @@ def main(
         ax = sns.heatmap(cm, square=True, annot=True)
         ax.set_xlabel("Predicted")
         ax.set_ylabel("True")
-        ax.figure.savefig("confusion-matrix.svg")
+        ax.figure.savefig(path.join(model_path, "confusion-matrix.svg"))
 
 
 if __name__ == "__main__":
