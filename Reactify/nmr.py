@@ -191,12 +191,14 @@ class NMRSpectrum:
         return s
 
     def shift(
-        self, delta: int, inplace=False, fill_value: Union[float, np.ndarray] = 0.0
+        self, delta: int, inplace=False, circular=False, fill_value: Union[float, np.ndarray] = 0.0
     ) -> NMRSpectrum:
         s = self if inplace else self.copy()
         if delta == 0:
             return self
-        if delta > 0:
+        if circular:
+            np.roll(s.spectrum, delta)
+        elif delta > 0:
             s.spectrum[delta:] = s.spectrum[:-delta]
             s.spectrum[:delta] = fill_value
         else:

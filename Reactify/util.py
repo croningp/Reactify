@@ -2,7 +2,10 @@ import argparse
 import inspect
 from typing import Callable, Iterable
 
-def register_params(parser: argparse.ArgumentParser, f: Callable, exclude: Iterable=()):
+
+def register_params(
+    parser: argparse.ArgumentParser, f: Callable, exclude: Iterable = ()
+):
     params = inspect.signature(f).parameters
     for name, param in params.items():
         if name in exclude:
@@ -11,7 +14,12 @@ def register_params(parser: argparse.ArgumentParser, f: Callable, exclude: Itera
         param_type = (
             param.annotation if param.annotation != param.empty else type(default)
         )
-        if default != param.empty:
+        if param_type == bool:
+            if default == True:
+                parser.add_argument(f"--no-{name}", dest=name, action="store_false")
+            else:
+                parser.add_argument(f"--{name}", dest=name, action="store_true")
+        elif default != param.empty:
             parser.add_argument(
                 f"--{name}",
                 type=param_type,
@@ -22,6 +30,7 @@ def register_params(parser: argparse.ArgumentParser, f: Callable, exclude: Itera
             parser.add_argument(
                 f"{name}", type=param_type, help=f"type:{param_type.__name__}"
             )
+
 
 def retrieve_params(args, f: Callable):
     params = inspect.signature(f).parameters
