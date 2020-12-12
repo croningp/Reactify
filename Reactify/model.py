@@ -14,8 +14,33 @@ def model(
     dropout_2=0.3,
     continuous=True,
     loss: str = None,
+    dropout_on_inference=False,
 ):
+    """Reactivity detection model.
+    The returned model takes an input of the shape `(n_experiments, 2, len_spectrum)` where
+    `input[i, 0, :]` is the normalized real part sum of the reactant spectra and
+    `input[i, 1, :]` is the normalized real part of the reaction spectrum.
+    The model returns a `(n_experiments, 1)` tensor if `continuous` is set to `True`,
+    corresponding to a continuous reactivity scale between 0 and 1.
+    Otherwise a `(n_experiments, 4)` tensor is returned, corresponding to 4 different
+    reactivity labels from not reactive at all to very reactive.
+
+    Args:
+        n_filters_1 (int): Number of filters in convolutional layer 1.
+        n_filters_2 (int): Number of filters in convolutional layer 2.
+        n_filters_3 (int): Number of filters in convolutional layer 3.
+        filter_shape_1 (int or Tuple[int]): Shape of filters in convolutional layer 1.
+        filter_shape_2 (int or Tuple[int]): Shape of filters in convolutional layer 2.
+        filter_shape_3 (int or Tuple[int]): Shape of filters in convolutional layer 3.
+        dropout_1 (float): Dropout probability before first dense layer.
+        dropout_2 (float): Dropout probability before second dense layer.
+        continuous (bool): Whether the output is one continuous variable (True) or
+            four corresponding to different reactivity classes.
+        loss (str): 
+        dropout_on_inference=False,
+    """
     input = tfk.Input(shape=(2, length))
+    dropout_kwarg = {"training": True} if dropout_on_inference else {}
     input1 = input[:, 0, :][:, :, np.newaxis]  # sample, NMR data point, channel
     input2 = input[:, 1, :][:, :, np.newaxis]
 
@@ -40,10 +65,10 @@ def model(
         result
     )
     result = tfk.layers.Reshape((n_filters_3, -1))(result)
-    result = tfk.layers.Dropout(dropout_1)(result)
+    result = tfk.layers.Dropout(dropout_1)(result, **dropout_kwarg)
     result = tfk.layers.Dense(8, activation="relu")(result)
     result = tfk.layers.Flatten()(result)
-    result = tfk.layers.Dropout(dropout_2)(result)
+    result = tfk.layers.Dropout(dropout_2)(result, **dropout_kwarg)
     result = tfk.layers.Dense(8, activation="relu")(result)
     result = tfk.layers.Dense(4, activation="softmax" if continuous else "relu")(result)
     if continuous:
