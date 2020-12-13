@@ -36,7 +36,9 @@ def model(
         dropout_2 (float): Dropout probability before second dense layer.
         continuous (bool): Whether the output is one continuous variable (True) or
             four corresponding to different reactivity classes.
-        loss (str): 
+        loss (str): Model loss function; default to `"mean_squared_error"` for
+            continuous assignment and `"categorical_crossentropy"` for categorical
+            assignment.
         dropout_on_inference=False,
     """
     input = tfk.Input(shape=(2, length))
@@ -77,7 +79,7 @@ def model(
     # return conv1, conv2, pool1, pool2, input1, input2, input, comb, result
     mdl = tfk.Model(inputs=input, outputs=result)
 
-    loss = loss or ("mean_squared_error" if continuous else "binary_crossentropy")
+    loss = loss or ("mean_squared_error" if continuous else "categorical_crossentropy")
 
     mdl.compile(
         optimizer="adam",
