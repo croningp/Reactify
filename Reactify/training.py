@@ -24,7 +24,7 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import confusion_matrix
 
 from .model import model as nn_model
-from .util import register_params, retrieve_params
+from .util import register_params, retrieve_kwargs
 
 sns.set(
     context="talk",
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     register_params(parser, nn_model, exclude=["length"])
     args = parser.parse_args()
     main(
-        **retrieve_params(args, main),
-        generation_kwargs=retrieve_params(args, generate_training_dataset),
-        model_kwargs=retrieve_params(args, nn_model),
+        **retrieve_kwargs(args, main),
+        generation_kwargs=retrieve_kwargs(args, generate_training_dataset),
+        model_kwargs=retrieve_kwargs(args, nn_model),
     )

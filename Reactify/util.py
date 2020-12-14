@@ -41,10 +41,13 @@ from typing import Callable, Iterable
 
 
 def register_params(
-    parser: argparse.ArgumentParser, f: Callable, exclude: Iterable = ()
+    parser: argparse.ArgumentParser, f: Callable, exclude: Iterable = (),
 ):
     params = inspect.signature(f).parameters
     for name, param in params.items():
+        kwargs = {}
+        if param.kind == inspect.Parameter.VAR_POSITIONAL:
+            kwargs.update(nargs="*")
         if name in exclude:
             continue
         default = param.default
@@ -53,22 +56,44 @@ def register_params(
         )
         if param_type == bool:
             if default == True:
-                parser.add_argument(f"--no-{name}", dest=name, action="store_false")
+                parser.add_argument(
+                    f"--no-{name}", dest=name, action="store_false", **kwargs
+                )
             else:
-                parser.add_argument(f"--{name}", dest=name, action="store_true")
+                parser.add_argument(
+                    f"--{name}", dest=name, action="store_true", **kwargs
+                )
         elif default != param.empty:
             parser.add_argument(
                 f"--{name}",
                 type=param_type,
                 default=default,
                 help=f"default: {default} type:{param_type.__name__}",
+                **kwargs,
             )
         else:
             parser.add_argument(
-                f"{name}", type=param_type, help=f"type:{param_type.__name__}"
+                f"{name}", type=param_type, help=f"type:{param_type.__name__}", **kwargs
             )
 
 
-def retrieve_params(args, f: Callable):
+def retrieve_args(args, f: Callable):
     params = inspect.signature(f).parameters
-    return {param: args.__getattribute__(param) for param in params if param in args}
+    return [
+        args.__getattribute__(k)
+        for k, w in params.items()
+        if k in args and w.kind != inspect.Parameter.KEYWORD_ONLY
+    ]
+    return positional, keyword
+
+
+def retrieve_kwargs(args, f: Callable, strict=False):
+    params = inspect.signature(f).parameters
+    param_types = [inspect.Parameter.KEYWORD_ONLY]
+    if not strict:
+        param_types += [inspect.Parameter.POSITIONAL_OR_KEYWORD]
+    return {
+        k: args.__getattribute__(k)
+        for k, w in params.items()
+        if k in args and w.kind in param_types
+    }
