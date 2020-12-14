@@ -1,3 +1,18 @@
+import tensorflow as tf
+
+gpus = tf.config.experimental.list_physical_devices("GPU")
+
+if gpus:
+    try:
+        # Currently, memory growth needs to be the same across GPUs
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+            logical_gpus = tf.config.experimental.list_logical_devices("GPU")
+            print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+    except RuntimeError as e:
+        # Memory growth must be set before GPUs have been initialized
+        print(e)
+
 import argparse
 from functools import reduce
 from operator import add
@@ -32,8 +47,8 @@ def infer_reactivity(
     ls = [len(s) for s in reactant_spectra]
     reactant_weights = reactant_weights or [1.0] * len(reactant_spectra)
 
-    # Make sure reaction spectrum and all reagent spectra are the same length
-    assert min(ls) == max(ls) == len(rxn_spec)
+    # Make sure reaction spectrum and all reactant spectra match the model's input length
+    assert min(ls) == max(ls) == len(rxn_spec) == model.input_shape[-1]
 
     test_point = np.zeros((1, 2, l))
     test_point[0, 0, :] = rxn_spec.normalize().spectrum.real
@@ -57,13 +72,15 @@ def main(model_path: str, rxn_path: str, *reactant_paths: str):
         object:
     """
     model = tfk.models.load_model(model_path)
-    rxn_spec = NMRSpectrum(rxn_path)
-    reactant_dataset = NMRDataset(reactant_paths, target_length=len(rxn_spec))
-    return infer_reactivity(model, rxn_spec, reactant_dataset[:])
+    input_len = model.input_shape[-1]
+    rxn_spec = NMRSpectrum(rxn_path).resize(input_len, inplace=True)
+    reactant_dataset = NMRDataset(reactant_paths, target_length=input_len)
+    return infer_reactivity(model, rxn_spec, reactant_dataset[:])[0]
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     register_params(parser, main)
     args = parser.parse_args()
-    print(main(*retrieve_args(args, main)))
+    reactivity = main(*retrieve_args(args, main))
+    print(f"Inferred reactivity: {reactivity :.2f}")
