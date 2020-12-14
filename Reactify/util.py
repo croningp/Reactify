@@ -6,7 +6,7 @@ user-provided command-line arguments to the desired type.
 ```python
 import argparse
 
-from reactify.util import register_params, retrieve_params
+from Reactify.util import register_params, retrieve_params
 
 
 def read_input(

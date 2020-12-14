@@ -1,9 +1,9 @@
-import tensorflow.keras as tfk
 import numpy as np
+import tensorflow.keras as tfk
 
 
 def model(
-    length,
+    length: int,
     n_filters_1=8,
     n_filters_2=16,
     n_filters_3=8,
@@ -15,7 +15,7 @@ def model(
     continuous=True,
     loss: str = None,
     dropout_on_inference=False,
-):
+) -> tfk.Model:
     """Reactivity detection model.
     The returned model takes an input of the shape `(n_experiments, 2, len_spectrum)` where
     `input[i, 0, :]` is the normalized real part sum of the reactant spectra and
@@ -26,6 +26,7 @@ def model(
     reactivity labels from not reactive at all to very reactive.
 
     Args:
+        length: The length, i.e. number of points, per spectrum.
         n_filters_1 (int): Number of filters in convolutional layer 1.
         n_filters_2 (int): Number of filters in convolutional layer 2.
         n_filters_3 (int): Number of filters in convolutional layer 3.
@@ -39,7 +40,10 @@ def model(
         loss (str): Model loss function; default to `"mean_squared_error"` for
             continuous assignment and `"categorical_crossentropy"` for categorical
             assignment.
-        dropout_on_inference=False,
+        dropout_on_inference (bool): Whether dropout should be applied during inference
+            (in addition to training).
+    Returns:
+        tensorflow.keras.Model: Tensorflow model.
     """
     input = tfk.Input(shape=(2, length))
     dropout_kwarg = {"training": True} if dropout_on_inference else {}

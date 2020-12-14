@@ -22,7 +22,6 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.metrics import confusion_matrix
-from tensorflow.keras import Model
 
 from .model import model as nn_model
 from .util import register_params, retrieve_params
@@ -46,7 +45,7 @@ def generate_training_dataset(
     quiet=False,
     one_hot=False,
 ):
-    from .dataset import (
+    from .paper_dataset import (
         FOLDER_PHOTO,
         FOLDER_SIMPLE2R,
         FOLDER_SIMPLE6R,
