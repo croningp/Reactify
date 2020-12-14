@@ -84,7 +84,6 @@ def retrieve_args(args, f: Callable):
         for k, w in params.items()
         if k in args and w.kind != inspect.Parameter.KEYWORD_ONLY
     ]
-    return positional, keyword
 
 
 def retrieve_kwargs(args, f: Callable, strict=False):
