@@ -55,7 +55,7 @@ def register_params(
             param.annotation if param.annotation != param.empty else type(default)
         )
         if param_type == bool:
-            if default == True:
+            if default is True:
                 parser.add_argument(
                     f"--no-{name}", dest=name, action="store_false", **kwargs
                 )
@@ -78,12 +78,18 @@ def register_params(
 
 
 def retrieve_args(args, f: Callable):
+    result = []
     params = inspect.signature(f).parameters
-    return [
-        args.__getattribute__(k)
-        for k, w in params.items()
-        if k in args and w.kind != inspect.Parameter.KEYWORD_ONLY
-    ]
+
+    for k, w in params.items():
+        if k not in args or w.kind == inspect.Parameter.KEYWORD_ONLY:
+            continue
+        if w.kind == inspect.Parameter.VAR_POSITIONAL:
+            result.extend(args.__getattribute__(k))
+        else:
+            result.append(args.__getattribute__(k))
+
+    return result
 
 
 def retrieve_kwargs(args, f: Callable, strict=False):

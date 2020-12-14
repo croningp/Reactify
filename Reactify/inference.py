@@ -1,7 +1,7 @@
 import argparse
 from functools import reduce
 from operator import add
-from typing import Iterable
+from typing import List
 
 import numpy as np
 from tensorflow import keras as tfk
@@ -14,7 +14,7 @@ from Reactify.util import register_params, retrieve_args
 def infer_reactivity(
     model: model,
     rxn_spec: NMRSpectrum,
-    reactant_spectra: Iterable[NMRSpectrum],
+    reactant_spectra: List[NMRSpectrum],
     reactant_weights=None,
 ):
     """Infer the reactivity of reaction spectrum `rxn_spec` relative to those of the
@@ -66,4 +66,4 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     register_params(parser, main)
     args = parser.parse_args()
-    print(main(**retrieve_args(args, main)))
+    print(main(*retrieve_args(args, main)))
