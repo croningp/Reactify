@@ -26,16 +26,33 @@ folder:
 
 ```shell
 cd <installation directory or directory where you cloned Reactify>
-# alternatively download the dataset and place it in this folder
 wget ???
 tar xvf data.tar.xz
 ```
 
-You can then launch the training script from anywhere:
+Alternatively, manually download the dataset and place it in the installation folder.
+
+You can now launch the training script from anywhere:
 
 ```shell
 # To see the script's full list of command line parameters
 python -m Reactify.training -h
+
+# e.g.
+python -m Reactify.training --leave_out 1018 --no-plot models/reactify_model
 ```
 
-[download]: https://? 
+In addition to the trained model, this script also plots the confusion matrix as well as (optionally) a plot showing the reactivity assignment for each example in the test dataset.
+
+![confusion matrix](confusion-matrix.svg)
+
+### Inference
+For quick assigment of reactivity, the script in `inference.py` gives a command-line interface for running inference:
+
+```shell
+python -m Reactify.inference <path to trained model> <path to reaction spectrum> <path to reactant 1 spectrum> <path to reactant 2 spectrum> ...
+```
+
+The manuscript dataset inlcludes a pre-trained model (under `data/FinderX-pretrained`) that you can use as reference. This model has been trained on the simple chemical (non-photochemical) space only.
+
+[download]: https://?
