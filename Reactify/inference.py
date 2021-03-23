@@ -27,7 +27,7 @@ from Reactify.util import register_params, retrieve_args
 
 
 def infer_reactivity(
-    model: model,
+    model: tf.keras.Model,
     rxn_spec: NMRSpectrum,
     reactant_spectra: List[NMRSpectrum],
     reactant_weights=None,
