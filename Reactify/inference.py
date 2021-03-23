@@ -61,17 +61,19 @@ def infer_reactivity(
     return model(test_point)[0, ...]
 
 
-def main(model_path: str, rxn_path: str, *reactant_paths: str):
+def main(model: str, rxn_path: str, *reactant_paths: str):
     """
     Args:
-        model_path: Path where pre-trained Tensorflow model is stored.
+        model (str or model): Path where pre-trained Tensorflow model is stored or
+            a model object.
         rxn_path: Path to NMR spectrum whose reactivity needs to be assessed.
         reactant_paths: Paths to NMR spectra for reactants involved in the reaction.
 
     Returns:
         object:
     """
-    model = tfk.models.load_model(model_path)
+    if isinstance(model, str):
+        model = tfk.models.load_model(model)
     input_len = model.input_shape[-1]
     rxn_spec = NMRSpectrum(rxn_path).resize(input_len, inplace=True)
     reactant_dataset = NMRDataset(reactant_paths, target_length=input_len)
