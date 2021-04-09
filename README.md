@@ -3,25 +3,21 @@
 General-purpose reactivity detection using proton NMR spectra. See also [Rx1st], _"Reactivity first exploration of chemical space"_ making use of Reactify's reactivity assignments. 
 
 ## Installation
-
-You can install the _Reactify_ package using `pip`:
-
-`pip install git+https://github.com/croningp/Reactify`
-
-For development, we recommend cloning the repository and installing it in development mode instead.
-
+For development, we recommend cloning the repository and installing it in development mode.
 ```shell
 git clone https://github.com/croningp/Reactify
-pip install -e .
 ```
 
-### Installing dependencies using conda
-Optionally, you can use conda to install dependencies first
+You can use conda to install dependencies first
 ```shell
-conda create -n Reactify --file Reactify/conda_list.txt
+conda env create --file Reactify/environment.yml
 conda activate Reactify
 ``` 
 
+To install the Reactify package in development mode:
+```shell
+pip install -e Reactify
+```
 ## Getting started
 
 ### Training the model
