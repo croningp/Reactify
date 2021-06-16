@@ -76,7 +76,7 @@ def model(
     result = tfk.layers.Flatten()(result)
     result = tfk.layers.Dropout(dropout_2)(result, **dropout_kwarg)
     result = tfk.layers.Dense(8, activation="relu")(result)
-    result = tfk.layers.Dense(4, activation="softmax" if continuous else "relu")(result)
+    result = tfk.layers.Dense(4, activation="softmax" if not continuous else "relu")(result)
     if continuous:
         result = tfk.layers.Dense(1)(result)
 
