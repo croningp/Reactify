@@ -173,11 +173,12 @@ def generate_training_dataset(
 
 def main(
     model_path: str,
-    epochs=15,
+    epochs=1000,
     batch_size=8,
     train=True,
     evaluate=True,
     plot=True,
+    weights = True,
     generation_kwargs={},
     model_kwargs={},
 ):
@@ -185,11 +186,19 @@ def main(
     inputs, outcomes, val_inputs, val_outcomes = generate_training_dataset(
         **generation_kwargs
     )
-
+    early_stopping = tf.keras.callbacks.EarlyStopping(patience=30, restore_best_weights=True)
     if train:
         print("Training model ...")
         model = nn_model(inputs.shape[-1], **model_kwargs)
-        model.summary()
+
+        if weights:
+            counts, edges = np.histogram(outcomes, bins=4)
+            weights = 1 / counts * len(outcomes) / 10
+            bins = np.digitize(outcomes, edges) - 1
+            bins = np.minimum(bins, 3)
+            sample_weights = weights[bins]
+        else:
+            sample_weights = np.ones(len(outcomes))
 
         try:
             model.fit(
@@ -197,7 +206,9 @@ def main(
                 outcomes,
                 batch_size=batch_size,
                 epochs=epochs,
+                sample_weight=sample_weights,
                 validation_data=(val_inputs, val_outcomes),
+                callbacks=[early_stopping]
             )
         except KeyboardInterrupt:
             pass
