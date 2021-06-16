@@ -121,8 +121,7 @@ class NMRSpectrum:
     def erase(self, low_ppm: float, high_ppm: float, inplace=False):
         s = self if inplace else self.copy()
         selector = (s.xscale > low_ppm) & (s.xscale < high_ppm)
-        p1, p2 = s.spectrum[selector][0], s.spectrum[selector][-1]
-        s.spectrum[selector] = p1 + np.linspace(0, p2 - p1, sum(selector))
+        s.spectrum[selector]=np.zeros(sum(selector))
         return s
 
     def autophase(self, inplace=False):
