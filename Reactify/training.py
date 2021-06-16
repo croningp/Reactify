@@ -22,7 +22,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.metrics import confusion_matrix
-
+from tqdm import tqdm
 from .model import model as nn_model
 from .util import register_params, retrieve_kwargs
 
@@ -82,7 +82,7 @@ def generate_training_dataset(
     cntr = 0
 
     # generate and augment training data points
-    for i in range(augmentation_factor):
+    for i in tqdm(range(augmentation_factor)):
         if not quiet:
             print(f"Augmentation @ {i+1}x")
         for folder, df, numbers, dataset, rxn_dataset in [
