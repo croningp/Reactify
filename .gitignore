@@ -5,3 +5,4 @@ data
 .mypy_cache
 .idea
 *.egg-info/
+.ipynb_checkpoints

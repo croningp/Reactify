@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.python.keras.backend import zeros_like
 
 gpus = tf.config.experimental.list_physical_devices("GPU")
 
@@ -173,7 +174,7 @@ def generate_training_dataset(
 
 def main(
     model_path: str,
-    epochs=1000,
+    epochs=200,
     batch_size=8,
     train=True,
     evaluate=True,
@@ -186,7 +187,7 @@ def main(
     inputs, outcomes, val_inputs, val_outcomes = generate_training_dataset(
         **generation_kwargs
     )
-    early_stopping = tf.keras.callbacks.EarlyStopping(patience=30, restore_best_weights=True)
+    early_stopping = tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)
     if train:
         print("Training model ...")
         model = nn_model(inputs.shape[-1], **model_kwargs)
@@ -203,7 +204,7 @@ def main(
         try:
             model.fit(
                 inputs,
-                outcomes,
+                [outcomes, np.zeros_like(outcomes), np.zeros_like(outcomes)],
                 batch_size=batch_size,
                 epochs=epochs,
                 sample_weight=sample_weights,
@@ -219,7 +220,7 @@ def main(
 
     if evaluate:
         print("Evaluating model ...")
-        out = model(val_inputs)[:, 0]
+        out = model(val_inputs)[0][:, 0]
         if plot:
             n_plots = len(out)
             f, axes = plt.subplots(nrows=n_plots, figsize=(10, 4 * n_plots))

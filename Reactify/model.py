@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow.keras as tfk
+from tensorflow.python.keras.layers.core import Dropout
 
 
 def model(
@@ -10,7 +11,7 @@ def model(
     filter_shape_1=64,
     filter_shape_2=8,
     filter_shape_3=(8, 4),
-    dropout_1=0.3,
+    dropout_1=0.2,
     dropout_2=0.3,
     continuous=True,
     loss: str = None,
@@ -47,48 +48,64 @@ def model(
     """
     input = tfk.Input(shape=(2, length))
     dropout_kwarg = {"training": True} if dropout_on_inference else {}
-    input1 = input[:, 0, :][:, :, np.newaxis]  # sample, NMR data point, channel
-    input2 = input[:, 1, :][:, :, np.newaxis]
+    input1 = tfk.Input(shape=(length, 1))
+    input2 = tfk.Input(shape=(length, 1))
 
     # identical processing of each spectrum
-    conv1 = tfk.layers.Conv1D(
-        filters=n_filters_1, kernel_size=filter_shape_1, input_shape=(length,)
+    intake_layers = tfk.Sequential(
+        [
+            tfk.layers.Dropout(dropout_1),
+            tfk.layers.Conv1D(
+                filters=n_filters_1, kernel_size=filter_shape_1, input_shape=(length,)
+            ),
+            tfk.layers.MaxPooling1D(pool_size=4),
+            tfk.layers.Conv1D(filters=n_filters_2, kernel_size=filter_shape_2),
+            tfk.layers.MaxPooling1D(pool_size=4),
+        ]
     )
-    pool1 = tfk.layers.MaxPooling1D(pool_size=4)
-    conv2 = tfk.layers.Conv1D(filters=n_filters_2, kernel_size=filter_shape_2)
-    pool2 = tfk.layers.MaxPooling1D(pool_size=4)
 
-    sig1 = pool2(conv2(pool1(conv1(input1))))
-    sig2 = pool2(conv2(pool1(conv1(input2))))
+    sig1 = intake_layers(input1)
+    sig2 = intake_layers(input2)
     combined = tfk.layers.concatenate(
         [sig1[:, np.newaxis, ...], sig2[:, np.newaxis, ...]], axis=1
     )
 
+    result = tfk.layers.Dropout(dropout_1)(combined)
     result = tfk.layers.Conv2D(
         n_filters_3, filter_shape_3, data_format="channels_first", padding="same"
-    )(combined)
+    )(result)
     result = tfk.layers.MaxPool2D(pool_size=(8, 2), data_format="channels_first")(
         result
     )
     result = tfk.layers.Reshape((n_filters_3, -1))(result)
-    result = tfk.layers.Dropout(dropout_1)(result, **dropout_kwarg)
+    result = tfk.layers.Dropout(dropout_2)(result, **dropout_kwarg)
     result = tfk.layers.Dense(8, activation="relu")(result)
     result = tfk.layers.Flatten()(result)
     result = tfk.layers.Dropout(dropout_2)(result, **dropout_kwarg)
     result = tfk.layers.Dense(8, activation="relu")(result)
-    result = tfk.layers.Dense(4, activation="softmax" if not continuous else "relu")(result)
+    result = tfk.layers.Dense(4, activation="softmax" if not continuous else "linear")(
+        result
+    )
     if continuous:
-        result = tfk.layers.Dense(1)(result)
+        result = tfk.layers.Dense(1, activation="sigmoid")(result)
 
-    # return conv1, conv2, pool1, pool2, input1, input2, input, comb, result
-    mdl = tfk.Model(inputs=input, outputs=result)
+    inner_model = tfk.Model(inputs=[input1, input2], outputs=result)
+
+    mdl = tfk.Model(
+        inputs=[input],
+        outputs=[
+            inner_model([input[:, 0, :][:, :, np.newaxis], input[:, 1, :][:, :, np.newaxis]]),
+            inner_model([input[:, 0, :][:, :, np.newaxis], input[:, 0, :][:, :, np.newaxis]]),
+            inner_model([input[:, 1, :][:, :, np.newaxis], input[:, 1, :][:, :, np.newaxis]]),
+            ]
+        )
 
     loss = loss or ("mean_squared_error" if continuous else "categorical_crossentropy")
 
     mdl.compile(
         optimizer="adam",
         loss=loss,
-        metrics=["mean_squared_error", "mean_absolute_error"],
+        metrics=["mean_absolute_error"],
     )
 
     return mdl
