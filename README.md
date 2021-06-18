@@ -19,6 +19,7 @@ To install the Reactify package in development mode:
 pip install -e Reactify
 ```
 ## Getting started
+The enclosed Jupyter notebook `Reactify.ipynb` is recommended as an example of how to train the *Reactify* model and evaluate its performance. We also provide a command line interface to achieve the same, see below.
 
 ### Training the model
 
